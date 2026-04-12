@@ -13,8 +13,24 @@ public class Main {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-                clientSocket.close();
+                handleClient(clientSocket);
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void handleClient(Socket clientSocket) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
+
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            clientSocket.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
