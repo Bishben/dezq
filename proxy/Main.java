@@ -21,14 +21,55 @@ public class Main {
     }
 
     public static void handleClient(Socket clientSocket) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            OutputStream clientOut = clientSocket.getOutputStream();
 
             String line;
+            StringBuilder request = new StringBuilder();
 
-            while ((line = reader.readLine()) != null) {
+            String host = null;
+            int port = 80;
+
+            // Build Request
+            while ((line = reader.readLine()) != null && !line.isEmpty()) {
                 System.out.println(line);
+                request.append(line).append("\r\n");
+
+                if (line.toLowerCase().startsWith("host:")) {
+                    host = line.split(" ")[1];
+                    System.out.println("Host found: [" + host + "]");
+                }
+            }
+            request.append("\r\n");
+            
+            if (host == null) {
+                System.out.println("No host found");
+                clientSocket.close();
+                return;
             }
 
+            // Send Request to Target Server
+            System.out.println("\n\n\t\t+++Attempting to connect to target server: " + host + ":" + port);
+            Socket serverSocket = new Socket(host, port);
+            System.out.println("\n\n\t\t+++Connected to target server: " + host + ":" + port);
+
+            OutputStream serverOut = serverSocket.getOutputStream();
+            InputStream serverIn = serverSocket.getInputStream();
+
+            serverOut.write(request.toString().getBytes());
+            serverOut.flush();
+
+            // Read Response from Target Server and Send Back to Client
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+
+            while ((bytesRead = serverIn.read(buffer)) != -1) {
+                clientOut.write(buffer, 0, bytesRead);
+            }
+            clientOut.flush();
+
+            serverSocket.close();
             clientSocket.close();
 
         } catch (IOException e) {
