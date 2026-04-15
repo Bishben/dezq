@@ -33,26 +33,33 @@ public class Main {
 
             // Build Request
             while ((line = reader.readLine()) != null && !line.isEmpty()) {
+                if (line.toLowerCase().startsWith("connection:")) {
+                    line = "Connection: close";
+                }
+                if (line.toLowerCase().startsWith("proxy-connection:")) {
+                    continue; // remove it
+                }
+
                 System.out.println(line);
                 request.append(line).append("\r\n");
 
                 if (line.toLowerCase().startsWith("host:")) {
                     host = line.split(" ")[1];
-                    System.out.println("Host found: [" + host + "]");
+                    System.out.println("[+]Host found: [" + host + "]");
                 }
             }
             request.append("\r\n");
             
             if (host == null) {
-                System.out.println("No host found");
+                System.out.println("[-]No host found");
                 clientSocket.close();
                 return;
             }
 
             // Send Request to Target Server
-            System.out.println("\n\n\t\t+++Attempting to connect to target server: " + host + ":" + port);
+            System.out.println("[!]Attempting to connect to target server: " + host + ":" + port);
             Socket serverSocket = new Socket(host, port);
-            System.out.println("\n\n\t\t+++Connected to target server: " + host + ":" + port);
+            System.out.println("[+]Connected to target server: " + host + ":" + port);
 
             OutputStream serverOut = serverSocket.getOutputStream();
             InputStream serverIn = serverSocket.getInputStream();
