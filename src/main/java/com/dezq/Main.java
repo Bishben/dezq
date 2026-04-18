@@ -1,19 +1,31 @@
-import java.io.*;
-import java.net.*;
+package com.dezq;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+import static org.fusesource.jansi.Ansi.Color.CYAN;
+import static org.fusesource.jansi.Ansi.Color.YELLOW;
+import static org.fusesource.jansi.Ansi.ansi;
+import org.fusesource.jansi.AnsiConsole;
 
 public class Main {
     public static void main(String[] args) {
+        AnsiConsole.systemInstall();
         int port = 8888;
 
         try {
             ServerSocket serverSocket = new ServerSocket(port);
-            System.out.println("Listening on port " + port);
+            // Use Jansi to make the startup look professional
+            System.out.println(ansi().fg(CYAN).a(">> dezq Engine Listening on port: ").a(port).reset());
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Client connected: " + clientSocket.getInetAddress());
-
-                handleClient(clientSocket);
+                // SURGERY: Spawning a new thread so requests don't block each other
+                new Thread(() -> handleClient(clientSocket)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -44,8 +56,9 @@ public class Main {
                 request.append(line).append("\r\n");
 
                 if (line.toLowerCase().startsWith("host:")) {
-                    host = line.split(" ")[1];
-                    System.out.println("[+]Host found: [" + host + "]");
+                    host = line.split(" ")[1].trim(); // Trim removes invisible spaces that crash connections
+                    // Professional Yellow highlight for the target domain
+                    System.out.println(ansi().fg(YELLOW).a("[TARGET] ").reset().a(host));
                 }
             }
             request.append("\r\n");
